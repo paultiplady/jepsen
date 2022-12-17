@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: node
+spec:
+  selector:
+    matchLabels:
+      app: node # has to match .spec.template.metadata.labels
+  serviceName: "node"
+  replicas: 1
+#  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: node # has to match .spec.selector.matchLabels
+    spec:
+#      terminationGracePeriodSeconds: 10
+      containers:
+        - name: node
+          # Not sure why this is needed, but the compose file adds it.
+          tty: true
+          securityContext:
+            privileged: true
+#            readOnlyRootFilesystem: false
+            capabilities:
+              add:
+                - ALL
+#          command:
+#            - bash
+#            - -c
+#            - "while date; do sleep 10; done"
+          image: node
+          ports:
+            - containerPort: 22
+              name: ssh
+          volumeMounts:
+            #     - /run:size=100M
+            #    - /run/lock:size=100M
+            - mountPath: /run
+              name: run
+#            - mountPath: /run/lock
+#              name: run-lock
+      volumes:
+        - name: run
+          emptyDir:
+            sizeLimit: 100M
+#        - name: run-lock
+#          emptyDir:
+#            sizeLimit: 100M
+
+#          volumeMounts:
+#            - name: ssh-secrets
+#              mountPath: /root/.ssh/id_rsa
+#              subPath: id_rsa
+#              readOnly: true
+#            - name: ssh-secrets
+#              mountPath: /root/.ssh/id_rsa.pub
+#              subPath: id_rsa.pub
+#              readOnly: true
+#            - name: ssh-secrets
+#              mountPath: /root/.ssh/authorized_keys
+#              subPath: authorized_keys
+#              readOnly: true
+#      volumes:
+#        - name: ssh-secrets
+#
+#          secret:
+##            defaultMode: 420,
+#            # Because OpenSSL strictly requires locked down permissions on its .ssh directory,
+#            # we must ensure that these secrets get mounted with the appropriate permissions.
+#            defaultMode: 0600
+#            secretName: id-rsa
+#            items:
+#              - key: id_rsa
+#                path: id_rsa
+#              - key: id_rsa.pub
+#                path: id_rsa.pub
+#              - key: authorized_keys
+#                path: authorized_keys
+
+#            - name: jepsen-shared
+#              mountPath: /var/jepsen/shared
+#    volumeClaimTemplates:
+#      - metadata:
+#          name: jepsen-shared
+#        spec:
+#          accessModes: [ "ReadWriteMany" ]
+#          storageClassName: "host-mount"
+#          resources:
+#            requests:
+#              storage: 1Gi
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: node
+  labels:
+    app: node
+spec:
+  ports:
+    - port: 22
+      name: ssh
+  clusterIP: None
+  selector:
+    app: node

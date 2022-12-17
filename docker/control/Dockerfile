@@ -26,6 +26,8 @@ RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
     chmod +x /usr/bin/lein && \
     lein self-install
 
+RUN mkdir -m 700 /root/.ssh
+
 # without --dev flag up.sh copies jepsen to these subfolders
 # with --dev flag they are empty until mounted
 COPY jepsen/jepsen /jepsen/jepsen/

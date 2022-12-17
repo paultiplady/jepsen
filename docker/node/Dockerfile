@@ -18,6 +18,8 @@ RUN apt-get -qy update && \
         openssh-server \
         pwgen
 
+RUN mkdir -m 700 /root/.ssh
+
 # When run, boot-debian-base will call this script, which does final
 # per-db-node setup stuff.
 ADD setup-jepsen.sh /usr/local/preinit/03-setup-jepsen
