@@ -19,7 +19,8 @@ RUN apt-get -y -q update && \
     wget \
     gnuplot \
     graphviz \
-    dos2unix
+    dos2unix \
+    jq
 
 RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein && \
     mv lein /usr/bin && \

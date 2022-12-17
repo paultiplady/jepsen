@@ -17,7 +17,7 @@ spec:
 #      terminationGracePeriodSeconds: 10
       containers:
         - name: control
-          image: control
+          image: jepsen-control
           ports:
             - containerPort: 22
               name: ssh
@@ -42,25 +42,11 @@ spec:
               readOnly: true
       volumes:
         - name: ssh-secrets
-
           secret:
             # Because OpenSSL strictly requires locked down permissions on its .ssh directory,
             # we must ensure that these secrets get mounted with the appropriate permissions.
             defaultMode: 0600
             secretName: id-rsa
-
-#            - name: jepsen-shared
-#              mountPath: /var/jepsen/shared
-#    volumeClaimTemplates:
-#      - metadata:
-#          name: jepsen-shared
-#        spec:
-#          accessModes: [ "ReadWriteMany" ]
-#          storageClassName: "host-mount"
-#          resources:
-#            requests:
-#              storage: 1Gi
-
 
 ---
 
@@ -77,3 +63,34 @@ spec:
   clusterIP: None
   selector:
     app: control
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+  # You can specify more than one "subject"
+  - kind: User
+    name: system:serviceaccount:default:default
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io

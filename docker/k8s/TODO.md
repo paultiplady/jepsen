@@ -128,4 +128,23 @@ Address: 10.1.0.60
 root@control-0:/jepsen#
 ```
 
-Can I get the pod names from DNS?
+Can I get the pod names from DNS? Doesn't look like it.
+
+https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/#without-using-a-proxy
+
+Can get the pods like this: http://localhost:8001/api/v1/namespaces/default/pods/?labelSelector=app=node
+
+Got the pods. Now we have `/root/.ssh/known_hosts` being populated, but it still doesn't fix the key exchange:
+
+
+```
+root@control-0:/jepsen# ssh node-0.node
+Warning: Permanently added the ED25519 host key for IP address '10.1.0.73' to the list of known hosts.
+root@node-0.node's password:
+
+root@control-0:/jepsen# cat /root/.ssh/known_hosts
+
+node-0.node ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdHcu6dU/JWCcr3MXfy66KBG98+4Glvnm93RcqY323yiE+0tiEvKJJuseaHuUa0TG4GyXkZh+BgmKSfzocka/0Y335E8Y8/jaX5K4NXB5AQCWubyJMaldE8HCF3GYWUlS1Edfz+h6aUirNvnoqjy3chXQJLwQpmykAyELw7t6yTnYIHPe6IUAOQINO6Vb15K0Ayj2A42OGWCud1L/sSUbEoKHC9GFecGi0nkgRRwt5vYKSt1v7eRL6HQRBy7TfKFPQ+FQx4iJj5r77kmuyXiuIvIyKPyJVboSja7GPT3+aJEJKuYTZaL/igPyO+HB+L03A+mggJP/9vyxfQIF2UKlh
+node-0.node ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJCUFWUoTo0GTjpydpZud2h2pMJwrSlfy3SJZ8Izmp4X
+|1|OMF0QFji9pHoJVGAQ1WLrHbirBU=|5lkNfwiT4b+LtYisUhEKAYqHH/I= ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJCUFWUoTo0GTjpydpZud2h2pMJwrSlfy3SJZ8Izmp4X
+```
