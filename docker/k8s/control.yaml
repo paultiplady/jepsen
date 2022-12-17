@@ -40,6 +40,10 @@ spec:
               mountPath: /root/.ssh/authorized_keys
               subPath: authorized_keys
               readOnly: true
+            - name: jepsen-root
+              mountPath: /jepsen_root
+            - name: tmp-test
+              mountPath: /tmptest
       volumes:
         - name: ssh-secrets
           secret:
@@ -47,8 +51,70 @@ spec:
             # we must ensure that these secrets get mounted with the appropriate permissions.
             defaultMode: 0600
             secretName: id-rsa
+#        - name: jepsen-root
+#          persistentVolumeClaim:
+#            claimName: jepsen-root
+        # For some reason this doesn't work; must be an issue with Docker config.
+        - name: jepsen-root
+          # Supposedly we can just mount the host path here? https://forums.docker.com/t/how-to-mount-hostpath-using-docker-for-mac-kubernetes/44083
+          # Note, the "hostPath" is a path on the VM, which gets mounted through to the actual host running Docker for Desktop or whatever.
+          hostPath:
+            # I had this as path: /Users/paul/git/jepsen/jepsen.etcdemo and it wasn't working...
+            path: /Users/paul/git/jepsen-tutorial/jepsen.etcdemo
+        # This works
+        - name: tmp-test
+          hostPath:
+            path: /private/tmp
+#            type: DirectoryOrCreate
+
+
+#  volumeClaimTemplates:
+#    - metadata:
+#        name: jepsen-root
+#      spec:
+#        accessModes:
+#          - ReadWriteOnce
+#        storageClassName: manual
+#        resources:
+#          requests:
+#            storage: 1Gi
+
 
 ---
+
+#kind: PersistentVolume
+#apiVersion: v1
+#metadata:
+#  name: host-volume
+#  labels:
+#    type: local
+#    app: control
+#spec:
+#  storageClassName: manual
+#  capacity:
+#    storage: 1Gi
+#  accessModes:
+#    - ReadWriteOnce
+#  hostPath:
+#    path: "/Users/paul/git/jepsen/jepsen.etcdemo"
+#
+#---
+
+#kind: PersistentVolumeClaim
+#apiVersion: v1
+#metadata:
+#  name: host-volume-claim
+#  labels:
+#    app: control
+#spec:
+#  storageClassName: manual
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 1Gi
+#
+#---
 
 apiVersion: v1
 kind: Service

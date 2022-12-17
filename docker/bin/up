@@ -169,7 +169,8 @@ if [ "${RUN_AS_DAEMON}" -eq 1 ]; then
 else
     INFO "Please run \`bin/console\` in another terminal to proceed"
     # shellcheck disable=SC2086
-    skaffold dev
+    # https://github.com/GoogleContainerTools/skaffold/issues/4158#issuecomment-1309283324
+    skaffold dev --tolerate-failures-until-deadline
 fi
 
 popd

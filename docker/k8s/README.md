@@ -10,3 +10,4 @@ and deploy them to the currently-configured Kubernetes cluster. For example, Doc
 
 - Experiment with Podman; might be able to drop `privileged` container running.
 - Add a templatable patch for replica count
+- Get bind mounts figured out. (Currently debugging.)
