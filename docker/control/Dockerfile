@@ -19,12 +19,15 @@ RUN apt-get -y -q update && \
     wget \
     gnuplot \
     graphviz \
-    dos2unix
+    dos2unix \
+    jq
 
 RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein && \
     mv lein /usr/bin && \
     chmod +x /usr/bin/lein && \
     lein self-install
+
+RUN mkdir -m 700 /root/.ssh
 
 # without --dev flag up.sh copies jepsen to these subfolders
 # with --dev flag they are empty until mounted

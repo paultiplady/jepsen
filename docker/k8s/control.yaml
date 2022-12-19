@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: control
+spec:
+  selector:
+    matchLabels:
+      app: control # has to match .spec.template.metadata.labels
+  serviceName: "control"
+  replicas: 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels:
+        app: control # has to match .spec.selector.matchLabels
+    spec:
+#      terminationGracePeriodSeconds: 10
+      containers:
+        - name: control
+          image: jepsen-control
+          ports:
+            - containerPort: 22
+              name: ssh
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            # Because of the funky way Kubernetes does volume mounts, we need to mount each file individually.
+            # If we just mount the volume once without subPaths, it will replace the existing /root/.ssh/ directory
+            # and we won't be able to edit that directory to add e.g. known_hosts file.
+            # TODO: If we can precompute the known_hosts then maybe we can push all the SSH config in at compile-time.
+            - name: ssh-secrets
+              mountPath: /root/.ssh/id_rsa
+              subPath: id_rsa
+              readOnly: true
+            - name: ssh-secrets
+              mountPath: /root/.ssh/id_rsa.pub
+              subPath: id_rsa.pub
+              readOnly: true
+            - name: ssh-secrets
+              mountPath: /root/.ssh/authorized_keys
+              subPath: authorized_keys
+              readOnly: true
+            - name: jepsen-root
+              mountPath: /jepsen_root
+            - name: tmp-test
+              mountPath: /tmptest
+      volumes:
+        - name: ssh-secrets
+          secret:
+            # Because OpenSSL strictly requires locked down permissions on its .ssh directory,
+            # we must ensure that these secrets get mounted with the appropriate permissions.
+            defaultMode: 0600
+            secretName: id-rsa
+#        - name: jepsen-root
+#          persistentVolumeClaim:
+#            claimName: jepsen-root
+        # For some reason this doesn't work; must be an issue with Docker config.
+        - name: jepsen-root
+          # Supposedly we can just mount the host path here? https://forums.docker.com/t/how-to-mount-hostpath-using-docker-for-mac-kubernetes/44083
+          # Note, the "hostPath" is a path on the VM, which gets mounted through to the actual host running Docker for Desktop or whatever.
+          hostPath:
+            # I had this as path: /Users/paul/git/jepsen/jepsen.etcdemo and it wasn't working...
+            path: /Users/paul/git/jepsen-tutorial/jepsen.etcdemo
+        # This works
+        - name: tmp-test
+          hostPath:
+            path: /private/tmp
+#            type: DirectoryOrCreate
+
+
+#  volumeClaimTemplates:
+#    - metadata:
+#        name: jepsen-root
+#      spec:
+#        accessModes:
+#          - ReadWriteOnce
+#        storageClassName: manual
+#        resources:
+#          requests:
+#            storage: 1Gi
+
+
+---
+
+#kind: PersistentVolume
+#apiVersion: v1
+#metadata:
+#  name: host-volume
+#  labels:
+#    type: local
+#    app: control
+#spec:
+#  storageClassName: manual
+#  capacity:
+#    storage: 1Gi
+#  accessModes:
+#    - ReadWriteOnce
+#  hostPath:
+#    path: "/Users/paul/git/jepsen/jepsen.etcdemo"
+#
+#---
+
+#kind: PersistentVolumeClaim
+#apiVersion: v1
+#metadata:
+#  name: host-volume-claim
+#  labels:
+#    app: control
+#spec:
+#  storageClassName: manual
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 1Gi
+#
+#---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: control
+  labels:
+    app: control
+spec:
+  ports:
+    - port: 8080
+      name: web
+  clusterIP: None
+  selector:
+    app: control
+
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+  # You can specify more than one "subject"
+  - kind: User
+    name: system:serviceaccount:default:default
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  # "roleRef" specifies the binding to a Role / ClusterRole
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io

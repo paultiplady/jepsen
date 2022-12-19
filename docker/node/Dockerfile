@@ -18,10 +18,7 @@ RUN apt-get -qy update && \
         openssh-server \
         pwgen
 
-# When run, boot-debian-base will call this script, which does final
-# per-db-node setup stuff.
-ADD setup-jepsen.sh /usr/local/preinit/03-setup-jepsen
-RUN chmod +x /usr/local/preinit/03-setup-jepsen
+RUN mkdir -m 700 /root/.ssh
 
 # Configure SSHD
 RUN sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/g" /etc/ssh/sshd_config
