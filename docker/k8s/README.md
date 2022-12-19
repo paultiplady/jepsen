@@ -9,5 +9,7 @@ and deploy them to the currently-configured Kubernetes cluster. For example, Doc
 ## TODO
 
 - Experiment with Podman; might be able to drop `privileged` container running.
+  - https://developers.redhat.com/blog/2019/04/24/how-to-run-systemd-in-a-container
+  - https://developers.redhat.com/blog/2016/09/13/running-systemd-in-a-non-privileged-container
 - Add a templatable patch for replica count
 - Get bind mounts figured out. (Currently debugging.)
